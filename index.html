@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>bielInvsões - Deobfuscator v7.8</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.15.1/beautify.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.15.1/beautify-html.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap');
+        .code-font { font-family: 'JetBrains Mono', monospace; }
+        .header-font { font-family: 'Inter', sans-serif; }
+        .gradient-text { background: linear-gradient(90deg, #22d3ee, #a855f7, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    </style>
+</head>
+<body class="bg-zinc-950 text-white min-h-screen">
+    <div class="max-w-7xl mx-auto px-6 py-12">
+        <div class="flex flex-col items-center text-center mb-10">
+            <h1 class="text-6xl font-bold header-font gradient-text mb-2">bielInvsões</h1>
+            <span class="px-5 py-2 bg-gradient-to-r from-red-500 to-pink-500 text-white text-sm font-mono rounded-2xl">v7.8</span>
+        </div>
+
+        <div class="bg-zinc-900/70 backdrop-blur-xl border border-zinc-700 rounded-3xl p-8">
+            <div class="flex flex-wrap gap-3 mb-8">
+                <button onclick="fullDeobfuscate()" class="bg-violet-600 hover:bg-violet-500 px-6 py-4 rounded-2xl font-semibold flex items-center gap-2 transition-all">
+                    <i class="fas fa-bolt"></i> Desofuscar Tudo
+                </button>
+                <button onclick="deepSelfDecode()" class="bg-amber-600 hover:bg-amber-500 px-6 py-4 rounded-2xl font-semibold flex items-center gap-2 transition-all">
+                    <i class="fas fa-layer-group"></i> Deep Self
+                </button>
+                <button onclick="copyResult()" class="bg-emerald-600 hover:bg-emerald-500 px-6 py-4 rounded-2xl font-semibold flex items-center gap-2 transition-all">
+                    <i class="fas fa-copy"></i> Copiar Resultado
+                </button>
+                <button onclick="clearAll()" class="bg-red-600 hover:bg-red-500 px-6 py-4 rounded-2xl font-semibold flex items-center gap-2 transition-all">
+                    <i class="fas fa-trash"></i> Limpar Tudo
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div>
+                    <p class="text-xs text-zinc-400 mb-3 font-medium">CÓDIGO OFUSCADO</p>
+                    <textarea id="inputCode" class="w-full h-[580px] code-font bg-zinc-950 border border-zinc-700 rounded-3xl p-6 text-sm resize-none focus:border-violet-500" placeholder="Cole o código ofuscado..."></textarea>
+                </div>
+                <div>
+                    <p class="text-xs text-zinc-400 mb-3 font-medium">RESULTADO DESOFUSCADO</p>
+                    <pre id="outputCode" class="w-full h-[580px] code-font bg-zinc-950 border border-zinc-700 rounded-3xl p-6 text-emerald-300 text-sm overflow-auto whitespace-pre-wrap"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function decodeHTMLEntities(str) {
+            const el = document.createElement('textarea');
+            el.innerHTML = str;
+            let result = el.value;
+            result = result.replace(/&#(\d+);/g, (_, n) => String.fromCharCode(parseInt(n)));
+            result = result.replace(/&#x([0-9A-Fa-f]+);/gi, (_, h) => String.fromCharCode(parseInt(h, 16)));
+            return result;
+        }
+
+        function decodeFromCharCode(str) {
+            return str.replace(/String\.fromCharCode\(([\s0x0-9A-Fa-f,]+)\)/gi, (_, codes) => {
+                return codes.split(',').map(c => {
+                    let val = c.trim();
+                    if (val.startsWith('0x')) return String.fromCharCode(parseInt(val, 16));
+                    return String.fromCharCode(parseInt(val) || 0);
+                }).join('');
+            });
+        }
+
+        function fullDeobfuscate() {
+            let code = document.getElementById('inputCode').value.trim();
+            if (!code) return alert("Cole o código primeiro!");
+
+            let result = code;
+            for (let i = 0; i < 30; i++) {
+                let prev = result;
+                result = decodeHTMLEntities(result);
+                result = decodeFromCharCode(result);
+                result = result.replace(/\\x([0-9A-Fa-f]{2})/gi, (_, p) => String.fromCharCode(parseInt(p, 16)));
+                if (result === prev) break;
+            }
+
+            try {
+                if (result.includes('<')) {
+                    result = html_beautify(result, { indent_size: 2 });
+                } else {
+                    result = js_beautify(result, { indent_size: 2 });
+                }
+            } catch(e) {}
+
+            document.getElementById('outputCode').textContent = result;
+        }
+
+        function deepSelfDecode() {
+            let code = document.getElementById('inputCode').value.trim();
+            if (!code) return alert("Cole o código primeiro!");
+
+            let result = code;
+            for (let i = 0; i < 50; i++) {
+                let prev = result;
+                result = decodeFromCharCode(result);
+                if (result === prev) break;
+            }
+
+            try {
+                result = js_beautify(result, { indent_size: 2 });
+            } catch(e) {}
+
+            document.getElementById('outputCode').textContent = result;
+        }
+
+        // ====================== COPIAR (VERSÃO MAIS ESTÁVEL) ======================
+        function copyResult() {
+            const content = document.getElementById('outputCode').textContent.trim();
+            if (!content) {
+                alert("Nada para copiar! Desofusque primeiro.");
+                return;
+            }
+
+            // Método principal
+            navigator.clipboard.writeText(content).then(() => {
+                showCopiedFeedback();
+            }).catch(() => {
+                // Fallback
+                const textarea = document.createElement("textarea");
+                textarea.value = content;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showCopiedFeedback();
+            });
+        }
+
+        function showCopiedFeedback() {
+            const copyButton = document.querySelector('button[onclick="copyResult()"]');
+            if (copyButton) {
+                const original = copyButton.innerHTML;
+                copyButton.innerHTML = `<i class="fas fa-check"></i> Copiado!`;
+                copyButton.style.backgroundColor = '#10b981';
+                
+                setTimeout(() => {
+                    copyButton.innerHTML = original;
+                    copyButton.style.backgroundColor = '';
+                }, 2000);
+            }
+        }
+
+        function clearAll() {
+            document.getElementById('inputCode').value = '';
+            document.getElementById('outputCode').textContent = '';
+        }
+    </script>
+</body>
+</html>
