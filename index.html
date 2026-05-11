@@ -21,7 +21,6 @@
             <h1 class="text-6xl font-bold header-font gradient-text mb-2">bielInvsões</h1>
             <span class="px-5 py-2 bg-gradient-to-r from-red-500 to-pink-500 text-white text-sm font-mono rounded-2xl">v7.8</span>
         </div>
-
         <div class="bg-zinc-900/70 backdrop-blur-xl border border-zinc-700 rounded-3xl p-8">
             <div class="flex flex-wrap gap-3 mb-8">
                 <button onclick="fullDeobfuscate()" class="bg-violet-600 hover:bg-violet-500 px-6 py-4 rounded-2xl font-semibold flex items-center gap-2 transition-all">
@@ -37,7 +36,6 @@
                     <i class="fas fa-trash"></i> Limpar Tudo
                 </button>
             </div>
-
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div>
                     <p class="text-xs text-zinc-400 mb-3 font-medium">CÓDIGO OFUSCADO</p>
@@ -71,21 +69,75 @@
             });
         }
 
+        // ==================== BASE64 AVANÇADO ====================
+        function decodeBase64(str) {
+            let result = str;
+            let changed = true;
+            let iterations = 0;
+
+            while (changed && iterations < 35) {
+                changed = false;
+                iterations++;
+
+                // decodeURIComponent(escape(atob("...")))
+                result = result.replace(/decodeURIComponent\s*\(\s*escape\s*\(\s*atob\s*\(\s*["']([A-Za-z0-9+/=]+)["']\s*\)\s*\)\s*\)/gi, (_, b64) => {
+                    try {
+                        changed = true;
+                        return decodeURIComponent(escape(atob(b64)));
+                    } catch(e) { return _; }
+                });
+
+                // atob direto
+                result = result.replace(/atob\s*\(\s*["']([A-Za-z0-9+/=]+)["']\s*\)/gi, (_, b64) => {
+                    try {
+                        changed = true;
+                        return atob(b64);
+                    } catch(e) { return _; }
+                });
+
+                // Strings Base64 longas puras
+                result = result.replace(/\b([A-Za-z0-9+/]{60,})(={0,2})\b/g, (match) => {
+                    try {
+                        const decoded = atob(match);
+                        if (/^[\x20-\x7E\s\u00A0-\uFFFF]{20,}/.test(decoded)) {
+                            changed = true;
+                            return decoded;
+                        }
+                    } catch(e) {}
+                    return match;
+                });
+            }
+            return result;
+        }
+
         function fullDeobfuscate() {
             let code = document.getElementById('inputCode').value.trim();
             if (!code) return alert("Cole o código primeiro!");
 
             let result = code;
-            for (let i = 0; i < 30; i++) {
+            for (let i = 0; i < 45; i++) {
                 let prev = result;
+                
+                result = decodeBase64(result);
                 result = decodeHTMLEntities(result);
                 result = decodeFromCharCode(result);
                 result = result.replace(/\\x([0-9A-Fa-f]{2})/gi, (_, p) => String.fromCharCode(parseInt(p, 16)));
+
+                // Remove document.write e eval quando possível
+                result = result.replace(/document\.write\s*\(\s*(.+?)\s*\)\s*;?/gi, '$1');
+                result = result.replace(/eval\s*\(\s*(.+?)\s*\)\s*;?/gi, '$1');
+
                 if (result === prev) break;
             }
 
+            // Força limpeza para começar com DOCTYPE
+            const doctypeMatch = result.match(/<!DOCTYPE[\s\S]*?<\/html>/i);
+            if (doctypeMatch) {
+                result = doctypeMatch[0];
+            }
+
             try {
-                if (result.includes('<')) {
+                if (result.includes('<!DOCTYPE') || result.includes('<html')) {
                     result = html_beautify(result, { indent_size: 2 });
                 } else {
                     result = js_beautify(result, { indent_size: 2 });
@@ -100,9 +152,10 @@
             if (!code) return alert("Cole o código primeiro!");
 
             let result = code;
-            for (let i = 0; i < 50; i++) {
+            for (let i = 0; i < 60; i++) {
                 let prev = result;
                 result = decodeFromCharCode(result);
+                result = decodeBase64(result);
                 if (result === prev) break;
             }
 
@@ -113,41 +166,32 @@
             document.getElementById('outputCode').textContent = result;
         }
 
-        // ====================== COPIAR (VERSÃO MAIS ESTÁVEL) ======================
         function copyResult() {
             const content = document.getElementById('outputCode').textContent.trim();
-            if (!content) {
-                alert("Nada para copiar! Desofusque primeiro.");
-                return;
-            }
-
-            // Método principal
-            navigator.clipboard.writeText(content).then(() => {
-                showCopiedFeedback();
-            }).catch(() => {
-                // Fallback
-                const textarea = document.createElement("textarea");
-                textarea.value = content;
-                document.body.appendChild(textarea);
-                textarea.select();
+            if (!content) return alert("Nada para copiar!");
+            
+            navigator.clipboard.writeText(content).then(showCopiedFeedback)
+            .catch(() => {
+                const ta = document.createElement("textarea");
+                ta.value = content;
+                document.body.appendChild(ta);
+                ta.select();
                 document.execCommand('copy');
-                document.body.removeChild(textarea);
+                document.body.removeChild(ta);
                 showCopiedFeedback();
             });
         }
 
         function showCopiedFeedback() {
-            const copyButton = document.querySelector('button[onclick="copyResult()"]');
-            if (copyButton) {
-                const original = copyButton.innerHTML;
-                copyButton.innerHTML = `<i class="fas fa-check"></i> Copiado!`;
-                copyButton.style.backgroundColor = '#10b981';
-                
-                setTimeout(() => {
-                    copyButton.innerHTML = original;
-                    copyButton.style.backgroundColor = '';
-                }, 2000);
-            }
+            const btn = document.querySelector('button[onclick="copyResult()"]');
+            if (!btn) return;
+            const original = btn.innerHTML;
+            btn.innerHTML = `<i class="fas fa-check"></i> Copiado!`;
+            btn.style.backgroundColor = '#10b981';
+            setTimeout(() => {
+                btn.innerHTML = original;
+                btn.style.backgroundColor = '';
+            }, 2000);
         }
 
         function clearAll() {
