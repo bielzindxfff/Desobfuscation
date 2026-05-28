@@ -8,10 +8,10 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.15.1/beautify.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.15.1/beautify-html.min.js"></script>
-   
+  
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
-       
+      
         .header-font { font-family: 'Inter', sans-serif; }
         body { font-family: 'Inter', sans-serif; }
         .code-font { font-family: 'JetBrains Mono', monospace; }
@@ -24,7 +24,6 @@
             word-break: break-all !important;
             overflow-wrap: break-word !important;
         }
-
         .login-container {
             animation: fadeIn 0.6s ease forwards;
         }
@@ -95,11 +94,11 @@
                 <i class="fas fa-globe text-blue-400"></i>
                 <span class="font-medium">Web Viewer</span>
             </button>
-            <button onclick="switchTool(1)" id="nav1" class="w-full text-left px-5 py-4 rounded-2xl flex items-center gap-3 hover:bg-zinc-900 transition mb-1">
-                <i class="fas fa-bolt text-sky-400"></i>
-                <span class="font-medium">Deobfuscator v7.8</span>
+            <button onclick="switchTool(1)" id="nav1" class="w-full text-left px-5 py-4 rounded-2xl flex items-center gap-3 hover:bg-zinc-900 transition mb-1 sidebar-active">
+                <i class="fas fa-bolt text-purple-400"></i>
+                <span class="font-medium">Deobfuscator <span class="text-purple-400">v9.0</span></span>
             </button>
-            <button onclick="switchTool(2)" id="nav2" class="sidebar-active w-full text-left px-5 py-4 rounded-2xl flex items-center gap-3 hover:bg-zinc-900 transition mb-1">
+            <button onclick="switchTool(2)" id="nav2" class="w-full text-left px-5 py-4 rounded-2xl flex items-center gap-3 hover:bg-zinc-900 transition mb-1">
                 <i class="fas fa-user-shield text-blue-400"></i>
                 <span class="font-medium">Gerador CPF + CEP</span>
             </button>
@@ -108,11 +107,12 @@
 
     <!-- CONTEÚDO -->
     <div id="mainContent" class="hidden flex-1 ml-72 min-h-screen p-8">
+
         <!-- ==================== WEB VIEWER ==================== -->
         <div id="tool0" class="hidden">
             <h2 class="text-4xl font-bold header-font mb-1">Web Source Viewer</h2>
             <p class="text-zinc-400 mb-8">Extraia o código-fonte de qualquer site</p>
-        
+       
             <div class="glass rounded-3xl p-8 mb-8">
                 <div class="flex flex-col md:flex-row gap-4">
                     <input id="urlInput" type="text" placeholder="https://site.com"
@@ -159,11 +159,11 @@
             </div>
         </div>
 
-        <!-- ==================== DEOBFUSCATOR v7.8 ==================== -->
+        <!-- ==================== DEOBFUSCATOR v9.0 ==================== -->
         <div id="tool1">
             <div class="flex items-center gap-4 mb-8">
                 <h2 class="text-4xl font-bold header-font">Deobfuscator</h2>
-                <span class="px-5 py-2 bg-zinc-800 text-sky-400 text-sm font-mono rounded-2xl border border-zinc-700">v7.8</span>
+                <span class="px-5 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-mono rounded-2xl">v9.0</span>
             </div>
             <div class="glass rounded-3xl p-8">
                 <div class="flex flex-wrap gap-3 mb-8">
@@ -251,7 +251,6 @@
             const password = document.getElementById('passwordInput').value.trim();
             const btn = document.getElementById('loginBtn');
             const errorDiv = document.getElementById('errorMessage');
-
             errorDiv.classList.add('hidden');
             btn.innerHTML = `<span class="inline-block animate-spin mr-2">⟳</span> Verificando...`;
             btn.disabled = true;
@@ -276,11 +275,21 @@
             }
         }
 
-        document.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') login();
-        });
+        // ==================== DEOBFUSCATOR v9.0 ====================
+        function decodeUnicode(str) {
+            return str.replace(/\\u([0-9A-Fa-f]{4})/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+        }
 
-        // ==================== TODO O JAVASCRIPT ORIGINAL ====================
+        function decodeCharCodeArray(str) {
+            return str.replace(/\[(\s*\d+\s*,?\s*)+\]/g, match => {
+                try {
+                    const nums = match.match(/\d+/g).map(Number);
+                    const text = nums.map(n => String.fromCharCode(n)).join('');
+                    return text.length > 15 ? text : match;
+                } catch(e) { return match; }
+            });
+        }
+
         function decodeHTMLEntities(str) {
             const el = document.createElement('textarea');
             el.innerHTML = str;
@@ -289,8 +298,9 @@
             result = result.replace(/&#x([0-9A-Fa-f]+);/gi, (_, h) => String.fromCharCode(parseInt(h, 16)));
             return result;
         }
+
         function decodeFromCharCode(str) {
-            return str.replace(/String\.fromCharCode\(([\s0-9A-Fa-f,]+)\)/gi, (_, codes) => {
+            return str.replace(/String\.fromCharCode\(([\s0x0-9A-Fa-f,]+)\)/gi, (_, codes) => {
                 return codes.split(',').map(c => {
                     let val = c.trim();
                     if (val.startsWith('0x')) return String.fromCharCode(parseInt(val, 16));
@@ -298,11 +308,12 @@
                 }).join('');
             });
         }
+
         function decodeBase64(str) {
             let result = str;
             let changed = true;
             let iterations = 0;
-            while (changed && iterations < 35) {
+            while (changed && iterations < 40) {
                 changed = false;
                 iterations++;
                 result = result.replace(/decodeURIComponent\s*\(\s*escape\s*\(\s*atob\s*\(\s*["']([A-Za-z0-9+/=]+)["']\s*\)\s*\)\s*\)/gi, (_, b64) => {
@@ -324,95 +335,103 @@
             }
             return result;
         }
+
+        function extractRealContent(str) {
+            let result = str;
+            const mainPattern = /var h\s*=\s*['"]\s*['"];\s*var c\s*=\s*(\[[\s\d,]+\]);[\s\S]*?document\.write\(h\);?/gi;
+            result = result.replace(mainPattern, (match, arrayMatch) => {
+                try {
+                    const nums = arrayMatch.match(/\d+/g).map(Number);
+                    return nums.map(n => String.fromCharCode(n)).join('');
+                } catch(e) { return ''; }
+            });
+
+            result = result.replace(/var h\s*=\s*['"].*?['"];/gi, '');
+            result = result.replace(/var c\s*=\s*\[[\s\S]*?\];?/gi, '');
+            result = result.replace(/for\(var i=0;i=c\.length;i\+\+\)\{[\s\S]*?\}/gi, '');
+            result = result.replace(/h\s*\+\s*=\s*String\.fromCharCode\(c\[i\]\);?/gi, '');
+            result = result.replace(/document\.write\s*\(\s*h\s*\)\s*;?/gi, '');
+            result = result.replace(/<\/?script[^>]*>/gi, '');
+            result = result.replace(/^\s*\(\s*function\s*\(\s*\)\s*\{([\s\S]*?)\}\s*\)\s*\(\s*\)\s*;?/gm, '$1');
+            return result.trim();
+        }
+
+        function cleanFinalOutput(str) {
+            let result = str.trim();
+            result = result.replace(/document\.write\s*\(\s*["']?/gi, '');
+            result = result.replace(/["']\s*\)\s*;?/gi, '');
+
+            if (result.includes('<!DOCTYPE') || result.includes('<html')) {
+                try { return html_beautify(result, { indent_size: 4 }); } catch(e) {}
+            } else {
+                try { return js_beautify(result, { indent_size: 2 }); } catch(e) {}
+            }
+            return result;
+        }
+
         function fullDeobfuscate() {
             let code = document.getElementById('inputCode').value.trim();
             if (!code) return alert("Cole o código primeiro!");
             let result = code;
-            for (let i = 0; i < 45; i++) {
-                let prev = result;
-                result = decodeBase64(result);
+            let prev;
+            for (let i = 0; i < 150; i++) {
+                prev = result;
+                result = decodeUnicode(result);
+                result = decodeCharCodeArray(result);
                 result = decodeHTMLEntities(result);
                 result = decodeFromCharCode(result);
+                result = decodeBase64(result);
                 result = result.replace(/\\x([0-9A-Fa-f]{2})/gi, (_, p) => String.fromCharCode(parseInt(p, 16)));
-                result = result.replace(/document\.write\s*\(\s*(.+?)\s*\)\s*;?/gi, '$1');
-                result = result.replace(/eval\s*\(\s*(.+?)\s*\)\s*;?/gi, '$1');
+                result = extractRealContent(result);
                 if (result === prev) break;
             }
-            const doctypeMatch = result.match(/<!DOCTYPE[\s\S]*?<\/html>/i);
-            if (doctypeMatch) result = doctypeMatch[0];
-            try {
-                if (result.includes('<!DOCTYPE') || result.includes('<html')) {
-                    result = html_beautify(result, { indent_size: 2 });
-                } else {
-                    result = js_beautify(result, { indent_size: 2 });
-                }
-            } catch(e) {}
-            document.getElementById('outputCode').textContent = result;
+            result = cleanFinalOutput(result);
+            document.getElementById('outputCode').textContent = result.length > 30 ? result : "Não foi possível decodificar completamente.";
         }
+
         function deepSelfDecode() {
             let code = document.getElementById('inputCode').value.trim();
             if (!code) return alert("Cole o código primeiro!");
             let result = code;
-            for (let i = 0; i < 60; i++) {
+            for (let i = 0; i < 220; i++) {
                 let prev = result;
+                result = decodeUnicode(result);
+                result = decodeCharCodeArray(result);
+                result = decodeHTMLEntities(result);
                 result = decodeFromCharCode(result);
                 result = decodeBase64(result);
+                result = extractRealContent(result);
                 if (result === prev) break;
             }
-            try {
-                result = js_beautify(result, { indent_size: 2 });
-            } catch(e) {}
-            document.getElementById('outputCode').textContent = result;
+            result = cleanFinalOutput(result);
+            document.getElementById('outputCode').textContent = result.length > 30 ? result : "Não foi possível decodificar.";
         }
+
         function copyResult() {
             const content = document.getElementById('outputCode').textContent.trim();
-            if (!content) return alert("Nada para copiar!");
-            navigator.clipboard.writeText(content).then(showCopiedFeedback).catch(() => {
-                const ta = document.createElement("textarea");
-                ta.value = content;
-                document.body.appendChild(ta);
-                ta.select();
-                document.execCommand('copy');
-                document.body.removeChild(ta);
-                showCopiedFeedback();
+            if (!content || content.includes("Não foi possível")) return alert("Nada para copiar!");
+            navigator.clipboard.writeText(content).then(() => {
+                const btn = document.querySelector('button[onclick="copyResult()"]');
+                const original = btn.innerHTML;
+                btn.innerHTML = `<i class="fas fa-check"></i> Copiado!`;
+                btn.style.backgroundColor = '#10b981';
+                setTimeout(() => { btn.innerHTML = original; btn.style.backgroundColor = ''; }, 2000);
             });
         }
-        function showCopiedFeedback() {
-            const btn = document.querySelector('button[onclick="copyResult()"]');
-            if (!btn) return;
-            const original = btn.innerHTML;
-            btn.innerHTML = `<i class="fas fa-check"></i> Copiado!`;
-            btn.style.backgroundColor = '#10b981';
-            setTimeout(() => {
-                btn.innerHTML = original;
-                btn.style.backgroundColor = '';
-            }, 2000);
-        }
+
         function clearAll() {
             document.getElementById('inputCode').value = '';
             document.getElementById('outputCode').textContent = '';
         }
-        function switchTool(n) {
-            document.querySelectorAll('[id^="tool"]').forEach(el => el.classList.add('hidden'));
-            document.getElementById(`tool${n}`).classList.remove('hidden');
-            document.querySelectorAll('[id^="nav"]').forEach(el => el.classList.remove('sidebar-active'));
-            document.getElementById(`nav${n}`).classList.add('sidebar-active');
-        }
 
+        // ==================== WEB VIEWER ====================
         const PROXIES = ["https://corsproxy.io/?","https://api.allorigins.win/raw?url=","https://proxy.cors.sh/","https://cors.bridged.cc/","https://api.codetabs.com/v1/proxy?quest="];
-        async function fetchWithProxy(url) {
-            for (let proxy of PROXIES) {
-                try {
-                    const res = await fetch(proxy + encodeURIComponent(url), { headers: { 'User-Agent': 'Mozilla/5.0' }, signal: AbortSignal.timeout(20000) });
-                    if (res.ok) return await res.text();
-                } catch (e) {}
-            }
-            throw new Error("Falhou");
-        }
+
         async function fetchSource() {
             let url = document.getElementById('urlInput').value.trim();
             if (!url) return showError("Digite uma URL válida");
             if (!url.startsWith('http')) url = 'https://' + url;
+
             const btn = document.getElementById('fetchBtn');
             const icon = document.getElementById('fetchIcon');
             const label = document.getElementById('fetchLabel');
@@ -420,13 +439,23 @@
             label.textContent = 'Extraindo...';
             btn.disabled = true;
             hideError();
+
             try {
-                const html = await fetchWithProxy(url);
-                document.getElementById('htmlOutput').textContent = html;
-                document.getElementById('sourceUrlDisplay').textContent = url;
-                document.getElementById('previewFrame').src = url;
-                switchTab(0);
-                showToast("✅ HTML extraído com sucesso!");
+                for (let proxy of PROXIES) {
+                    try {
+                        const res = await fetch(proxy + encodeURIComponent(url), { headers: { 'User-Agent': 'Mozilla/5.0' }, signal: AbortSignal.timeout(15000) });
+                        if (res.ok) {
+                            const html = await res.text();
+                            document.getElementById('htmlOutput').textContent = html;
+                            document.getElementById('sourceUrlDisplay').textContent = url;
+                            document.getElementById('previewFrame').src = url;
+                            switchTab(0);
+                            showToast("✅ HTML extraído com sucesso!");
+                            return;
+                        }
+                    } catch (e) {}
+                }
+                throw new Error("Falhou");
             } catch (err) {
                 showError("Não foi possível acessar o site.");
             } finally {
@@ -435,16 +464,19 @@
                 btn.disabled = false;
             }
         }
+
         function switchTab(tab) {
             document.getElementById('tab0').classList.toggle('tab-active', tab === 0);
             document.getElementById('tab1').classList.toggle('tab-active', tab === 1);
             document.getElementById('sourcePanel').classList.toggle('hidden', tab !== 0);
             document.getElementById('previewPanel').classList.toggle('hidden', tab !== 1);
         }
+
         function copyHtml() {
             const text = document.getElementById('htmlOutput').textContent.trim();
             if (text) copyToClipboard(text, "✅ Copiado!");
         }
+
         function downloadHtml() {
             const text = document.getElementById('htmlOutput').textContent;
             const url = URL.createObjectURL(new Blob([text], { type: 'text/html' }));
@@ -455,6 +487,7 @@
             URL.revokeObjectURL(url);
         }
 
+        // ==================== GERADOR CPF + CEP ====================
         const nomesMasculinos = ["João", "Pedro", "Lucas", "Mateus", "Gabriel", "Rafael", "Enzo", "Felipe", "Gustavo", "Bruno", "Vinicius", "Thiago", "Arthur", "Miguel"];
         const nomesFemininos = ["Maria", "Ana", "Julia", "Laura", "Beatriz", "Isabela", "Sofia", "Manuela", "Valentina", "Larissa", "Camila", "Letícia", "Luana", "Fernanda"];
         const sobrenomes = ["Silva", "Santos", "Oliveira", "Souza", "Rodrigues", "Ferreira", "Almeida", "Costa", "Pereira", "Lima", "Gomes", "Ribeiro", "Cardoso", "Barbosa"];
@@ -464,7 +497,9 @@
             {cep: "30130-000", cidade: "Belo Horizonte", uf: "MG", endereco: "Av. Afonso Pena", bairro: "Centro"},
             {cep: "40010-000", cidade: "Salvador", uf: "BA", endereco: "Praça Municipal", bairro: "Pelourinho"}
         ];
+
         let currentGender = 0;
+
         function setGender(g) {
             currentGender = g;
             document.getElementById('btnM').classList.toggle('border-blue-500', g === 0);
@@ -472,6 +507,7 @@
             document.getElementById('btnF').classList.toggle('border-blue-500', g === 1);
             document.getElementById('btnF').classList.toggle('border-zinc-700', g !== 1);
         }
+
         function gerarCPF() {
             let cpf = Array.from({length: 9}, () => Math.floor(Math.random() * 10)).join('');
             let sum = cpf.split('').reduce((acc, num, i) => acc + parseInt(num) * (10 - i), 0);
@@ -480,22 +516,26 @@
             let dv2 = (sum * 10) % 11 % 10; cpf += dv2;
             return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
         }
+
         function gerarRG() {
             let rg = Array.from({length:8}, () => Math.floor(Math.random()*10)).join('');
             return rg.replace(/(\d{2})(\d{3})(\d{3})/, "$1.$2.$3") + "-" + Math.floor(Math.random()*10);
         }
+
         function gerarTelefone() {
             const ddds = ["11","21","31","41","51","61","71","81","91"];
             const ddd = ddds[Math.floor(Math.random()*ddds.length)];
             const num = Math.floor(90000000 + Math.random()*9999999);
             return `(${ddd}) 9${num.toString().substring(0,4)}-${num.toString().substring(4)}`;
         }
+
         function gerarDataNascimento() {
             const ano = Math.floor(Math.random() * 35) + 1985;
             const mes = String(Math.floor(Math.random() * 12) + 1).padStart(2, '0');
             const dia = String(Math.floor(Math.random() * 28) + 1).padStart(2, '0');
             return { data: `${dia}/${mes}/${ano}`, idade: 2026 - ano };
         }
+
         function generateData() {
             const nomeBase = currentGender === 0 ? nomesMasculinos[Math.floor(Math.random()*nomesMasculinos.length)] : nomesFemininos[Math.floor(Math.random()*nomesFemininos.length)];
             const sobrenome = sobrenomes[Math.floor(Math.random()*sobrenomes.length)];
@@ -507,6 +547,7 @@
             const nasc = gerarDataNascimento();
             const numero = Math.floor(Math.random() * 800) + 100;
             const email = `${nomeBase.toLowerCase()}.${sobrenome.toLowerCase()}@gmail.com`;
+
             document.getElementById('nome').textContent = nomeCompleto;
             document.getElementById('cpf').textContent = cpf;
             document.getElementById('nascimento').textContent = nasc.data;
@@ -518,32 +559,16 @@
             document.getElementById('endereco').textContent = `${local.endereco}, ${numero} - ${local.bairro}`;
             document.getElementById('cidade').textContent = `${local.cidade} - ${local.uf}`;
         }
+
         function copyAll() {
-            const texto = `Nome: ${document.getElementById('nome').textContent}
-CPF: ${document.getElementById('cpf').textContent}
-Data de Nascimento: ${document.getElementById('nascimento').textContent}
-Idade: ${document.getElementById('idade').textContent}
-RG: ${document.getElementById('rg').textContent}
-Telefone: ${document.getElementById('telefone').textContent}
-Email: ${document.getElementById('email').textContent}
-CEP: ${document.getElementById('cep').textContent}
-Endereço: ${document.getElementById('endereco').textContent}
-Cidade: ${document.getElementById('cidade').textContent}`;
-            copyToClipboard(texto, "✅ Todos os dados copiados com sucesso!");
+            const texto = `Nome: ${document.getElementById('nome').textContent}\nCPF: ${document.getElementById('cpf').textContent}\nData de Nascimento: ${document.getElementById('nascimento').textContent}\nIdade: ${document.getElementById('idade').textContent}\nRG: ${document.getElementById('rg').textContent}\nTelefone: ${document.getElementById('telefone').textContent}\nEmail: ${document.getElementById('email').textContent}\nCEP: ${document.getElementById('cep').textContent}\nEndereço: ${document.getElementById('endereco').textContent}\nCidade: ${document.getElementById('cidade').textContent}`;
+            copyToClipboard(texto, "✅ Todos os dados copiados!");
         }
+
         function copyToClipboard(text, msg) {
-            navigator.clipboard.writeText(text).then(() => showToast(msg)).catch(() => {
-                const ta = document.createElement("textarea");
-                ta.value = text;
-                ta.style.position = "fixed";
-                ta.style.left = "-9999px";
-                document.body.appendChild(ta);
-                ta.select();
-                document.execCommand('copy');
-                document.body.removeChild(ta);
-                showToast(msg);
-            });
+            navigator.clipboard.writeText(text).then(() => showToast(msg));
         }
+
         function showToast(msg) {
             const toast = document.createElement('div');
             toast.style.cssText = `position:fixed;bottom:30px;right:30px;background:#3b82f6;color:white;padding:14px 24px;border-radius:9999px;z-index:9999;`;
@@ -551,19 +576,32 @@ Cidade: ${document.getElementById('cidade').textContent}`;
             document.body.appendChild(toast);
             setTimeout(() => toast.remove(), 2500);
         }
+
         function showError(msg) {
             document.getElementById('errorMsg').textContent = msg;
             document.getElementById('errorBanner').classList.remove('hidden');
         }
+
         function hideError() {
             document.getElementById('errorBanner').classList.add('hidden');
         }
 
+        function switchTool(n) {
+            document.querySelectorAll('[id^="tool"]').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`tool${n}`).classList.remove('hidden');
+            document.querySelectorAll('[id^="nav"]').forEach(el => el.classList.remove('sidebar-active'));
+            document.getElementById(`nav${n}`).classList.add('sidebar-active');
+        }
+
         function initHub() {
-            switchTool(0);
+            switchTool(1); // Abre no Deobfuscator v9.0 por padrão
             setGender(0);
             generateData();
         }
+
+        document.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') login();
+        });
     </script>
 </body>
 </html>
