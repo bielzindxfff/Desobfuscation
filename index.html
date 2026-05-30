@@ -108,57 +108,68 @@
     <!-- CONTEÚDO -->
     <div id="mainContent" class="hidden flex-1 ml-72 min-h-screen p-8">
 
-        <!-- ==================== WEB VIEWER ==================== -->
-        <div id="tool0" class="hidden">
-            <h2 class="text-4xl font-bold header-font mb-1">Web Source Viewer</h2>
-            <p class="text-zinc-400 mb-8">Extraia o código-fonte de qualquer site</p>
-       
-            <div class="glass rounded-3xl p-8 mb-8">
-                <div class="flex flex-col md:flex-row gap-4">
-                    <input id="urlInput" type="text" placeholder="https://site.com"
-                           class="flex-1 px-6 py-5 bg-zinc-900 border border-zinc-700 rounded-2xl focus:border-blue-500 outline-none text-lg">
-                    <button onclick="fetchSource()" id="fetchBtn"
-                            class="px-10 py-5 bg-blue-600 hover:bg-blue-500 rounded-2xl font-semibold flex items-center gap-3 transition-all">
-                        <i id="fetchIcon" class="fas fa-bolt"></i>
-                        <span id="fetchLabel">Extrair HTML</span>
-                    </button>
-                </div>
-            </div>
-            <div id="errorBanner" class="hidden mb-8 p-5 bg-red-950/70 border border-red-900 rounded-2xl text-red-300">
-                <div class="flex items-start gap-4">
-                    <i class="fas fa-triangle-exclamation text-2xl mt-0.5"></i>
-                    <div>
-                        <strong>Não foi possível acessar o site</strong>
-                        <p id="errorMsg" class="mt-1"></p>
-                    </div>
-                </div>
-            </div>
-            <div class="flex border-b border-zinc-800 mb-6">
-                <button onclick="switchTab(0)" id="tab0" class="tab-active px-8 py-4 text-lg">Código Fonte</button>
-                <button onclick="switchTab(1)" id="tab1" class="px-8 py-4 text-lg text-zinc-400 hover:text-white transition">Visualização</button>
-            </div>
-            <div id="sourcePanel" class="bg-zinc-900 rounded-3xl overflow-hidden border border-zinc-800">
-                <div class="sticky top-0 z-10 px-6 py-4 border-b border-zinc-800 bg-black flex justify-between items-center">
-                    <div class="flex items-center gap-3">
-                        <i class="fas fa-code text-blue-400"></i>
-                        <span id="sourceUrlDisplay" class="text-sm text-zinc-400 truncate"></span>
-                    </div>
-                    <div class="flex gap-3">
-                        <button onclick="copyHtml()" class="px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-xl flex items-center gap-2 text-sm font-medium transition">
-                            <i class="fas fa-copy"></i> Copiar
-                        </button>
-                        <button onclick="downloadHtml()" class="px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-xl flex items-center gap-2 text-sm font-medium transition">
-                            <i class="fas fa-download"></i> Baixar
-                        </button>
-                    </div>
-                </div>
-                <pre id="htmlOutput" class="code-font p-6 overflow-auto output-pane text-sm leading-relaxed text-zinc-300"></pre>
-            </div>
-            <div id="previewPanel" class="hidden bg-zinc-900 rounded-3xl overflow-hidden border border-zinc-800 mt-6">
-                <iframe id="previewFrame" class="w-full output-pane border-0 bg-white"></iframe>
+     <!-- ==================== WEB VIEWER ==================== -->
+<div id="tool0" class="hidden">
+    <h2 class="text-4xl font-bold header-font mb-1">Web Source Viewer</h2>
+    <p class="text-zinc-400 mb-8">Extraia o código-fonte de qualquer site</p>
+  
+    <div class="glass rounded-3xl p-8 mb-8">
+        <div class="flex flex-col md:flex-row gap-4">
+            <input id="urlInput" type="text" placeholder="https://site.com"
+                   class="flex-1 px-6 py-5 bg-zinc-900 border border-zinc-700 rounded-2xl focus:border-blue-500 outline-none text-lg">
+            <button onclick="fetchSource()" id="fetchBtn"
+                    class="px-10 py-5 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 rounded-2xl font-semibold flex items-center gap-3 transition-all active:scale-95">
+                <i id="fetchIcon" class="fas fa-bolt"></i>
+                <span id="fetchLabel">Extrair HTML</span>
+            </button>
+        </div>
+    </div>
+
+    <div id="errorBanner" class="hidden mb-8 p-5 bg-red-950/70 border border-red-900 rounded-2xl text-red-300">
+        <div class="flex items-start gap-4">
+            <i class="fas fa-triangle-exclamation text-2xl mt-0.5"></i>
+            <div>
+                <strong>Não foi possível acessar o site</strong>
+                <p id="errorMsg" class="mt-1"></p>
             </div>
         </div>
+    </div>
 
+    <div class="flex border-b border-zinc-800 mb-6">
+        <button onclick="switchTab(0)" id="tab0" class="tab-active px-8 py-4 text-lg">Código Fonte</button>
+        <button onclick="switchTab(1)" id="tab1" class="px-8 py-4 text-lg text-zinc-400 hover:text-white transition">Visualização</button>
+    </div>
+
+    <!-- Código Fonte -->
+    <div id="sourcePanel" class="bg-zinc-900 rounded-3xl overflow-hidden border border-zinc-800">
+        <div class="sticky top-0 z-10 px-6 py-4 border-b border-zinc-800 bg-black flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <i class="fas fa-code text-blue-400"></i>
+                <span id="sourceUrlDisplay" class="text-sm text-zinc-400 truncate"></span>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="copyHtml()" class="px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-xl flex items-center gap-2 text-sm font-medium transition">
+                    <i class="fas fa-copy"></i> Copiar
+                </button>
+                <button onclick="downloadHtml()" class="px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-xl flex items-center gap-2 text-sm font-medium transition">
+                    <i class="fas fa-download"></i> Baixar
+                </button>
+            </div>
+        </div>
+        <pre id="htmlOutput" class="code-font p-6 overflow-auto output-pane text-sm leading-relaxed text-zinc-300 bg-[#0a0a0a]"></pre>
+    </div>
+
+    <!-- Visualização -->
+    <div id="previewPanel" class="hidden bg-zinc-900 rounded-3xl overflow-hidden border border-zinc-800 mt-6">
+        <div class="px-6 py-4 border-b border-zinc-800 bg-black flex items-center gap-3">
+            <i class="fas fa-eye text-emerald-400"></i>
+            <span class="font-medium">Visualização em Tempo Real</span>
+        </div>
+        <div class="relative">
+            <iframe id="previewFrame" class="w-full output-pane border-0 bg-white"></iframe>
+        </div>
+    </div>
+</div>
         <!-- ==================== DEOBFUSCATOR v9.0 ==================== -->
         <div id="tool1">
             <div class="flex items-center gap-4 mb-8">
